@@ -3,15 +3,27 @@ package org.users.list.dtos;
 public class UserDTO {
     private Integer id;
     private String login;
-    private String name;
+    private String password;
     private String email;
     private Integer age;
     private String registration;
 
-    public UserDTO(Integer id, String login, String name, String email, Integer age, String registration) {
+    public UserDTO() {
+
+    }
+
+    public UserDTO(Integer id, String login, String password, String email, Integer age, String registration) {
         this.id = id;
         this.login = login;
-        this.name = name;
+        this.password = password;
+        this.email = email;
+        this.age = age;
+        this.registration = registration;
+    }
+
+    public UserDTO(String login, String password, String email, Integer age, String registration) {
+        this.login = login;
+        this.password = password;
         this.email = email;
         this.age = age;
         this.registration = registration;
@@ -33,12 +45,12 @@ public class UserDTO {
         this.login = login;
     }
 
-    public String getName() {
-        return name;
+    public String getPassword() {
+        return password;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getEmail() {

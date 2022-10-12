@@ -9,6 +9,8 @@ public interface Service<T> {
 
     List<T> getEntities(Map<String, String> params) throws SQLException, IOException;
 
+    List<T> getAllEntities() throws SQLException, IOException;
+
     void addEntity(T entity) throws SQLException, IOException;
 
     void updateEntity(T entity) throws SQLException, IOException;

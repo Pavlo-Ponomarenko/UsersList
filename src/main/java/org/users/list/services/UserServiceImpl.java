@@ -11,10 +11,12 @@ import java.util.Map;
 public class UserServiceImpl implements UserService {
 
     private String getUsersByParams = "select * from users where (id = ? or ? is null) and (login = ? or ? is null) and " +
-            "(name = ? or ? is null) and (email = ? or ? is null) and (age = ? or ? is null) and (registration = ? or ? is null)";
-    private String addUser = "insert into users(login, name, email, age, registration) values (?, ?, ?, ?, ?)";
-    private String updateUserById = "update users set login = ?, name = ?, email = ?, age = ?, registration = ? where id = ?";
+            "(password = ? or ? is null) and (email = ? or ? is null) and (age = ? or ? is null) and (registration = ? or ? is null)";
+    private String getAllUsers = "select * from users";
+    private String addUser = "insert into users(login, password, email, age, registration) values (?, ?, ?, ?, ?)";
+    private String updateUserById = "update users set login = ?, password = ?, email = ?, age = ?, registration = ? where id = ?";
     private String deleteUserById = "delete from users where id = ?";
+    private String findUserByLogin = "select * from users where login = ?";
 
 
     private void fullFillStatement(PreparedStatement stat, Map<String, String> params) throws SQLException {
@@ -32,9 +34,9 @@ public class UserServiceImpl implements UserService {
             stat.setNull(3, Types.NULL);
             stat.setNull(4, Types.NULL);
         }
-        if (params.containsKey("name")) {
-            stat.setString(5, params.get("name"));
-            stat.setString(6, params.get("name"));
+        if (params.containsKey("password")) {
+            stat.setString(5, params.get("password"));
+            stat.setString(6, params.get("password"));
         } else {
             stat.setNull(5, Types.NULL);
             stat.setNull(6, Types.NULL);
@@ -62,25 +64,38 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    private List<UserDTO> extractEntities(ResultSet result) throws SQLException {
+        LinkedList<UserDTO> users = new LinkedList<>();
+        while (result.next()) {
+            UserDTO user = new UserDTO(result.getInt(1), result.getString(2), result.getString(3),
+                    result.getString(4), result.getInt(5), result.getString(6));
+            users.add(user);
+        }
+        return users;
+    }
+
     @Override
     public List<UserDTO> getEntities(Map<String, String> params) throws SQLException, IOException {
         try(Connection con = ServiceProvider.getConnection()) {
             PreparedStatement stat = con.prepareStatement(getUsersByParams);
             fullFillStatement(stat, params);
             ResultSet result = stat.executeQuery();
-            LinkedList<UserDTO> users = new LinkedList<>();
-            while (result.next()) {
-                UserDTO user = new UserDTO(result.getInt(1), result.getString(2), result.getString(3),
-                        result.getString(4), result.getInt(5), result.getString(6));
-                users.add(user);
-            }
-            return users;
+            return extractEntities(result);
+        }
+    }
+
+    @Override
+    public List<UserDTO> getAllEntities() throws SQLException, IOException {
+        try(Connection con = ServiceProvider.getConnection()) {
+            Statement stat = con.createStatement();
+            ResultSet result = stat.executeQuery(getAllUsers);
+            return extractEntities(result);
         }
     }
 
     private void setNotIdColumns(PreparedStatement stat, UserDTO entity) throws SQLException {
         stat.setString(1, entity.getLogin());
-        stat.setString(2, entity.getName());
+        stat.setString(2, entity.getPassword());
         stat.setString(3, entity.getEmail());
         stat.setInt(4, entity.getAge());
         stat.setString(5, entity.getRegistration());
@@ -91,7 +106,7 @@ public class UserServiceImpl implements UserService {
         try(Connection con = ServiceProvider.getConnection()) {
             PreparedStatement stat = con.prepareStatement(addUser);
             setNotIdColumns(stat, entity);
-            stat.executeQuery();
+            stat.executeUpdate();
         }
     }
 
@@ -101,7 +116,7 @@ public class UserServiceImpl implements UserService {
             PreparedStatement stat = con.prepareStatement(updateUserById);
             setNotIdColumns(stat, entity);
             stat.setInt(6, entity.getId());
-            stat.executeQuery();
+            stat.executeUpdate();
         }
     }
 
@@ -110,7 +125,21 @@ public class UserServiceImpl implements UserService {
         try(Connection con = ServiceProvider.getConnection()) {
             PreparedStatement stat = con.prepareStatement(deleteUserById);
             stat.setInt(1, id);
-            stat.executeQuery();
+            stat.executeUpdate();
+        }
+    }
+
+    @Override
+    public UserDTO getUserByLogin(String login) throws SQLException, IOException{
+        try(Connection con = ServiceProvider.getConnection()) {
+            PreparedStatement stat = con.prepareStatement(findUserByLogin);
+            stat.setString(1, login);
+            ResultSet result = stat.executeQuery();
+            if (!result.next()) {
+                return null;
+            }
+            return new UserDTO(result.getInt(1), result.getString(2), result.getString(3),
+                    result.getString(4), result.getInt(5), result.getString(6));
         }
     }
 }
